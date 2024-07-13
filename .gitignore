@@ -1,2 +1,4 @@
 *.swp
 *.swo
+elf/dummy_*
+elf/main_*

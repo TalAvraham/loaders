@@ -254,7 +254,7 @@ void elf_run(void *buf, char **argv, char **env)
    // Map the ELF in memory
    elf_load(buf, stack, STACK_SIZE, &elf_base, &elf_entry);
 
-   // resolve_relative_relocations(buf, elf_base);
+   resolve_relative_relocations(buf, elf_base);
 
    // Check for the existence of a dynamic loader
    char *interp_name = _get_interp(buf);
