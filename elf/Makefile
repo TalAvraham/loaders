@@ -1,16 +1,15 @@
-# The loader (main) needs to be position-independant, otherwise the loader and the file to
+# The loader (main) needs to be position-independent, otherwise the loader and the file to
 # load (dummy) would be loaded onto the same offset => crash!
+# If it can not be position-independent (say you're compiling with an antique toolchain
+# which does not support -static-pie) then it can be set to be loaded at a different address
+# using the linker -Ttext-segment option.
 all:
-	rexec gcc -DOS_LINUX -DARCH_X86_64 elf.c main.c -o main_64 -pie -fPIC
-	rexec gcc dummy.c -o dummy_64 -fPIC -pie
-
-	rexec gcc -DOS_LINUX -DARCH_I686 elf.c main.c -o main_32 -pie -fPIC -m32
-	rexec gcc dummy.c -o dummy_32 -m32
+	gcc -DOS_LINUX -DARCH_X86_64 elf.c main.c -o main_64 -static -g3 -Wl,-Ttext-segment=0x800000
+	gcc dummy.c -o dummy_64 -static -g3
 
 clean:
-	rm main_{32,64} dummy_{32,64}
+	rm main_64 dummy_64
 
 # Test with:
-# ./main_32 ./dummy_32
 # ./main_64 ./dummy_64
 

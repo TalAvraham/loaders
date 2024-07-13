@@ -15,22 +15,8 @@ int main(int argc, char *argv[], char *envp[])
    char *buf = malloc(size);
    fread(buf, size, 1, f);
 
-   char *_argv[] = {
-      argv[0],
-      "arg1",
-      "arg2",
-      NULL,
-   };
-
-   char *_env[] = {
-      "HOME=/tmp",
-      NULL,
-   };
-
-   printf("main: %p\n", elf_sym(buf, "main"));
-
    // Run the ELF
-   elf_run(buf, argv, envp);
+   elf_run(buf, &argv[1], envp);
 
    return 0;
 }

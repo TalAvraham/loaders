@@ -8,6 +8,7 @@
    #include <sys/mman.h>
    #include <sys/user.h>
    #include <sys/types.h>
+   #include <stdio.h>
 #endif
 
 #include "elf.h"
@@ -62,8 +63,6 @@ static Elf_Shdr *_get_section(char *name, void *elf_start)
     
    for(x = 0; x < ehdr->e_shnum; x++)
    {
-      //printf("%p %s\n", shdr[x].sh_addr, sh_strtab_p + shdr[x].sh_name);
-
       if(!strcmp(name, sh_strtab_p + shdr[x].sh_name))
          return &shdr[x];
    }
@@ -87,8 +86,6 @@ void *elf_sym(void *elf_start, char *sym_name)
 
          for(y = 0; y < shdr[x].sh_size / sizeof(Elf_Sym); y++)
          {
-            //printf("@name:%s\n", strings + syms[y].st_name);
-
             if(strcmp(sym_name, strings + syms[y].st_name) == 0)
                return (void *)syms[y].st_value;
          }
@@ -96,6 +93,36 @@ void *elf_sym(void *elf_start, char *sym_name)
    }
 
    return NULL;
+}
+
+void resolve_relative_relocations_of_section(char* elf_start, size_t elf_load_base, Elf_Shdr *section)
+{
+   Elf_Rela *relocations = (Elf_Rela *)&elf_start[section->sh_offset];
+   elf_load_base = 0;
+
+   for (size_t i = 0; i < section->sh_size / section->sh_entsize; i++)
+   {
+      if (R_X86_64_IRELATIVE == ELF_R_TYPE(relocations[i].r_info))
+      {
+         long ** relocation_address = (long **)(elf_load_base + relocations[i].r_offset);
+         long *(* ifunc)(void) = (long *(*)(void))(elf_load_base + relocations[i].r_addend);
+         *relocation_address = ifunc();
+      }
+   }
+}
+
+void resolve_relative_relocations(char *elf_start, size_t elf_load_base)
+{
+   Elf_Ehdr *hdr = (Elf_Ehdr *)elf_start;
+   Elf_Shdr *section_hdrs = (Elf_Shdr *)&elf_start[hdr->e_shoff];
+
+   for (size_t i = 0; i < hdr->e_shnum; i++)
+   {
+      if (SHT_RELA == section_hdrs[i].sh_type)
+      {
+         resolve_relative_relocations_of_section(elf_start, elf_load_base, &section_hdrs[i]);
+      }
+   }
 }
 
 void elf_load(char *elf_start, void *stack, int stack_size, size_t *base_addr, size_t *entry)
@@ -157,7 +184,12 @@ void elf_load(char *elf_start, void *stack, int stack_size, size_t *base_addr, s
 
       int map_size = ROUND_UP(phdr[x].p_memsz + round_down_size, PAGE_SIZE);
 
-      mmap(base + map_start, map_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0);
+      void *result = mmap(base + map_start, map_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0);
+      if (MAP_FAILED == result)
+      {
+         fprintf(stderr, "MMAP FAILURE");
+         exit(20);
+      }
       memcpy((void *) base + phdr[x].p_vaddr, elf_start + phdr[x].p_offset, phdr[x].p_filesz);
 
       // Zero-out BSS, if it exists
@@ -221,6 +253,8 @@ void elf_run(void *buf, char **argv, char **env)
 
    // Map the ELF in memory
    elf_load(buf, stack, STACK_SIZE, &elf_base, &elf_entry);
+
+   // resolve_relative_relocations(buf, elf_base);
 
    // Check for the existence of a dynamic loader
    char *interp_name = _get_interp(buf);

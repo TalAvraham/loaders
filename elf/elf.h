@@ -25,6 +25,7 @@
 		typedef Elf32_Sym Elf_Sym;
 		typedef Elf32_Shdr Elf_Shdr;
 		typedef Elf32_Rel Elf_Rel;
+		typedef Elf32_Rela Elf_Rela;
 		typedef Elf32_Word Elf_Word;
 		#define ELF_R_SYM(x) ELF32_R_SYM(x)
 		#define ELF_R_TYPE(x) ELF32_R_TYPE(x)
@@ -34,6 +35,7 @@
 		typedef Elf64_Sym Elf_Sym;
 		typedef Elf64_Shdr Elf_Shdr;
 		typedef Elf64_Rel Elf_Rel;
+		typedef Elf64_Rela Elf_Rela;
 		typedef Elf64_Word Elf_Word;
 		#define ELF_R_SYM(x) ELF64_R_SYM(x)
 		#define ELF_R_TYPE(x) ELF64_R_TYPE(x)
