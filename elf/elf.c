@@ -127,6 +127,27 @@ void resolve_relative_relocations(char *elf_start, size_t elf_load_base)
 }
 #endif /* ARCH_X86_64 */
 
+#ifdef PRINT_PROGRAM_HEADERS
+const char *get_program_header_name(int p_type) {
+    switch (p_type) {
+        case PT_NULL: return "PT_NULL";
+        case PT_LOAD: return "PT_LOAD";
+        case PT_DYNAMIC: return "PT_DYNAMIC";
+        case PT_INTERP: return "PT_INTERP";
+        case PT_NOTE: return "PT_NOTE";
+        case PT_SHLIB: return "PT_SHLIB";
+        case PT_PHDR: return "PT_PHDR";
+        case PT_TLS: return "PT_TLS";
+        case PT_NUM: return "PT_NUM";
+        case PT_LOOS: return "PT_LOOS";
+        case PT_GNU_EH_FRAME: return "PT_GNU_EH_FRAME";
+        case PT_GNU_STACK: return "PT_GNU_STACK";
+        case PT_GNU_RELRO: return "PT_GNU_RELRO";
+        default: return "UNKNOWN";
+    }
+}
+#endif /* PRINT_PROGRAM_HEADERS */
+
 void elf_load(char *elf_start, void *stack, int stack_size, size_t *base_addr, size_t *entry)
 {
     Elf_Ehdr *hdr;
@@ -174,6 +195,10 @@ void elf_load(char *elf_start, void *stack, int stack_size, size_t *base_addr, s
             mprotect((unsigned char *) stack, stack_size, stack_prot);
         }
 #endif
+
+#ifdef PRINT_PROGRAM_HEADERS
+        printf("Program header: %s\n", get_program_header_name(phdr[x].p_type));
+#endif /* PRINT_PROGRAM_HEADERS */
 
         if(phdr[x].p_type != PT_LOAD)
             continue;
