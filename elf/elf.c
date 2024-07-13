@@ -217,7 +217,29 @@ void elf_load(char *elf_start, void *stack, int stack_size, size_t *base_addr, s
     }
 }
 
-void elf_run(void *buf, char **argv, char **env)
+char *read_elf_content(const char *path) {
+    FILE *elf = fopen(path, "rb");
+    if (NULL == elf) {
+        perror("fopen failed");
+        return NULL;
+    }
+
+    fseek(elf, 0, SEEK_END);
+    int size = ftell(elf);
+
+    fseek(elf, 0L, SEEK_SET);
+
+    char *buf = malloc(size);
+    ssize_t bytes_read = fread(buf, 1, size, elf);
+    if (bytes_read != size) {
+        fprintf(stderr, "Warning: did not read all elf content (%ld/%d)\n",
+                bytes_read, size);
+    }
+
+    return buf;
+}
+
+void elf_run(const char *path, char **argv, char **env)
 {
     int x;
     int str_len;
@@ -226,6 +248,7 @@ void elf_run(void *buf, char **argv, char **env)
     int cnt = 0;
     int argc = 0;
     int envc = 0;
+    void *buf = read_elf_content(path);
 
     Elf_Ehdr *hdr = (Elf_Ehdr *)buf;
 
@@ -391,6 +414,9 @@ void elf_run(void *buf, char **argv, char **env)
     // AT_NULL
     at[cnt].id         = AT_NULL;
     at[cnt++].value   = 0;
+
+    /* We're done parsing and loading, free unneeded data before jumping to loaded elf. */
+    free(buf);
 
     //
     // Architecture and OS dependant init-reg-and-jump-to-start trampoline

@@ -7,7 +7,7 @@ all: build test
 
 build:
 	@echo "============ Building ============"
-	gcc -DOS_LINUX -DARCH_X86_64 elf.c main.c -o main_64 -static -g3 -Wl,-Ttext-segment=0x800000
+	gcc -DOS_LINUX -DARCH_X86_64 elf.c main.c -o main_64 -static -g3 -O0 -Wl,-Ttext-segment=0x800000
 	gcc dummy.c -o dummy_64 -static -g3
 	@echo "============== Done ==============\n"
 

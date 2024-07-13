@@ -79,7 +79,7 @@ void elf_load(char *elf_start, void *stack, int stack_size, size_t *base_addr, s
 /*!
 * \brief Map the ELF into memory and run it with the provided arguments.
 */
-void elf_run(void *buf, char **argv, char **env);
+void elf_run(const char *path, char **argv, char **env);
 
 #endif // _ELF_LOADER_H_
 
