@@ -95,6 +95,7 @@ void *elf_sym(void *elf_start, char *sym_name)
     return NULL;
 }
 
+#ifdef ARCH_X86_64
 void resolve_relative_relocations_of_section(char* elf_start, size_t elf_load_base, Elf_Shdr *section)
 {
     Elf_Rela *relocations = (Elf_Rela *)&elf_start[section->sh_offset];
@@ -124,6 +125,7 @@ void resolve_relative_relocations(char *elf_start, size_t elf_load_base)
         }
     }
 }
+#endif /* ARCH_X86_64 */
 
 void elf_load(char *elf_start, void *stack, int stack_size, size_t *base_addr, size_t *entry)
 {
@@ -249,6 +251,8 @@ void elf_run(const char *path, char **argv, char **env)
     int argc = 0;
     int envc = 0;
     void *buf = read_elf_content(path);
+    if (NULL == buf)
+        return;
 
     Elf_Ehdr *hdr = (Elf_Ehdr *)buf;
 
@@ -277,7 +281,9 @@ void elf_run(const char *path, char **argv, char **env)
     // Map the ELF in memory
     elf_load(buf, stack, STACK_SIZE, &elf_base, &elf_entry);
 
+#ifdef ARCH_X86_64
     resolve_relative_relocations(buf, elf_base);
+#endif /* ARCH_X86_64 */
 
     // Check for the existence of a dynamic loader
     char *interp_name = _get_interp(buf);
